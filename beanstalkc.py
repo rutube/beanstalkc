@@ -58,6 +58,26 @@ class Connection(object):
         self.port = port
         self.connect()
 
+    def __getattribute__(self, name):
+        attr = super(Connection, self).__getattribute__(name)
+        # Все публичные методы объекта декорируем обработкой SocketError
+        # При возникновении ошибки происходит реконнект и вторая попытка
+        if callable(attr) and name[0] != '_':
+            connect = super(Connection, self).__getattribute__('connect')
+            def safe_command(*args, **kwargs):
+                countdown = 30
+                while countdown > 0:
+                    try:
+                        return attr(*args, **kwargs)
+                    except SocketError as e:
+                        countdown -= 1
+                        connect()
+                raise e
+
+            return safe_command
+        return attr
+
+
     def connect(self):
         """Connect to beanstalkd server."""
         self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
