@@ -60,8 +60,8 @@ class Connection(object):
 
     def __getattribute__(self, name):
         attr = super(Connection, self).__getattribute__(name)
-        # Все публичные методы объекта декорируем обработкой SocketError
-        # При возникновении ошибки происходит реконнект и вторая попытка
+        # Decorating all public Connection methods with SocketError wrapper.
+        # Forces reconnect and command retry.
         if callable(attr) and name[0] != '_':
             connect = super(Connection, self).__getattribute__('connect')
             def safe_command(*args, **kwargs):
